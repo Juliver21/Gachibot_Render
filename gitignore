@@ -1,0 +1,33 @@
+# Секрети — НІКОЛИ не завантажувати!
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Дані бота (локальні)
+data/
+*.json
+
+# Звуки (завантажуй вручну)
+sounds/
+
+# Cookies
+cookies.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
