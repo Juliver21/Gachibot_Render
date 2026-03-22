@@ -125,10 +125,12 @@ class Music(commands.Cog):
     async def _connect_lavalink(self):
         nodes = [wavelink.Node(uri=n["uri"], password=n["password"]) for n in LAVALINK_NODES]
         try:
-            await wavelink.Pool.connect(nodes=nodes, client=self.bot)
+            await wavelink.Pool.connect(nodes=nodes, client=self.bot, cache_capacity=None)
             print(f"✅ Lavalink: підключаємось до {len(nodes)} серверів...")
         except Exception as e:
-            print(f"❌ Lavalink: {e}")
+            # Не крашимо бота якщо Lavalink недоступний
+            print(f"⚠️ Lavalink недоступний: {e}")
+            print("⚠️ Музика не працюватиме поки Lavalink не підключиться")
 
     @commands.Cog.listener()
     async def on_wavelink_node_ready(self, payload: wavelink.NodeReadyEventPayload):
@@ -173,6 +175,15 @@ class Music(commands.Cog):
         print(f"⚠️ Inactive player — залишаємось в каналі")
 
     async def _search_track(self, query: str) -> "wavelink.Playable | None":
+        # Перевіряємо чи є підключені ноди
+        try:
+            nodes = wavelink.Pool.nodes
+            if not nodes:
+                print("❌ Немає підключених Lavalink нодів")
+                return None
+        except Exception:
+            return None
+
         print(f"🔎 Шукаю: {query[:80]}")
         try:
             if "utm" in query:
