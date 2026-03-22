@@ -16,35 +16,40 @@ def health():
 
 @app.route("/ping")
 def ping():
-    return jsonify({"pong": True}), 200
+    return "pong", 200
 
 def _ping_loop():
     """Пінгує себе кожні 4 хвилини щоб Render не засинав"""
-    # Чекаємо поки сервер стартує
     time.sleep(30)
-    
-    url = os.getenv("RENDER_EXTERNAL_URL", "")
+
+    url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
     if not url:
-        # Спробуємо знайти URL автоматично
         print("⚠️ RENDER_EXTERNAL_URL не встановлено — self-ping вимкнено")
         return
-    
+
     ping_url = f"{url}/ping"
     print(f"🔄 Self-ping запущено: {ping_url}")
-    
+
+    # Заголовки щоб обійти Cloudflare
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; GachiBot/1.0)",
+        "Accept": "text/plain",
+        "Cache-Control": "no-cache",
+    }
+
     while True:
         try:
-            r = requests.get(ping_url, timeout=10)
-            print(f"✅ Self-ping: {r.status_code}")
+            r = requests.get(ping_url, headers=headers, timeout=15)
+            if r.status_code == 200:
+                print(f"✅ Self-ping OK")
+            else:
+                print(f"⚠️ Self-ping: {r.status_code}")
         except Exception as e:
             print(f"❌ Self-ping помилка: {e}")
-        time.sleep(240)  # 4 хвилини (Render засинає після 15 хв)
+        time.sleep(240)  # 4 хвилини
 
 def keep_alive():
-    # Запускаємо ping loop у фоні
     threading.Thread(target=_ping_loop, daemon=True).start()
-    
-    # Запускаємо Flask
     port = int(os.getenv("PORT", 8080))
     threading.Thread(
         target=lambda: app.run(host="0.0.0.0", port=port, use_reloader=False),
